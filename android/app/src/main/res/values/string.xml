@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">com.sf.flash_chat</string>
+    <string name="facebook_app_id">507301734346394</string>
+    <string name="fb_login_protocol_scheme">fb507301734346394</string>
+    <string name="client_token">6af33951c115e1c35c34c857dcd1adcc</string>
+</resources>

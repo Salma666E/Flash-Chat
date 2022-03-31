@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flash_chat/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:provider/provider.dart';
 
 import '../components/rounded_button.dart';
 import '../constants.dart';
@@ -20,6 +22,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<AuthProvider>(context, listen: false);
     return Scaffold(
       backgroundColor: Colors.white,
       body: ModalProgressHUD(
@@ -67,7 +70,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 height: 24.0,
               ),
               RoundedButton(
-                title: 'Register',
+                icon: 'assets/images/email.png',
+                title: 'Register with Email',
                 colour: Colors.blueAccent,
                 onPressed: () async {
                   setState(() {
@@ -77,6 +81,51 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     final newUser = await _auth.createUserWithEmailAndPassword(
                         email: email, password: password);
                     if (newUser != null) {
+                      Navigator.pushNamed(context, ChatScreen.id);
+                    }
+
+                    setState(() {
+                      showSpinner = false;
+                    });
+                  } catch (e) {
+                    print(e);
+                  }
+                },
+              ),
+              RoundedButton(
+                icon: 'assets/images/google.png',
+                title: 'Register with Google',
+                colour: Colors.lightBlueAccent,
+                onPressed: () async {
+                  setState(() {
+                    showSpinner = true;
+                  });
+                  try {
+                    final user = await provider.googleLogin();
+                    if (user != null) {
+                      Navigator.pushNamed(context, ChatScreen.id);
+                    }
+
+                    setState(() {
+                      showSpinner = false;
+                    });
+                  } catch (e) {
+                    print(e);
+                  }
+                },
+              ),
+              RoundedButton(
+                icon: 'assets/images/facebook.png',
+                title: 'Register with Facebook',
+                colour: Colors.lightBlueAccent,
+                onPressed: () async {
+                  setState(() {
+                    showSpinner = true;
+                  });
+                  try {
+                    final user = await provider.facebookLogin();
+
+                    if (user != null) {
                       Navigator.pushNamed(context, ChatScreen.id);
                     }
 
