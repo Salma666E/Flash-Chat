@@ -72,9 +72,10 @@ class LoginScreen extends StatelessWidget {
                 try {
                   final user = await _auth.signInWithEmailAndPassword(
                       email: email, password: password);
-                  providerWatch.prefs.setString('name', name);
+                  providerWatch.prefs!.setString('name', name);
+                  providerWatch.prefs!.setString('email', email);
                   if (user != null) {
-                    CashHelper.pref.setBool('isLogin', true);
+                    providerWatch.prefs!.setBool('isLogin', true);
                     Navigator.pushNamed(context, ChatScreen.id);
                   }
                 } catch (e) {
@@ -90,7 +91,7 @@ class LoginScreen extends StatelessWidget {
                 try {
                   final user = await provider.googleLogin();
                   if (user != null) {
-                    CashHelper.pref.setBool('isLogin', true);
+                    providerWatch.prefs!.setBool('isLogin', true);
                     Navigator.pushNamed(context, ChatScreen.id);
                   }
                 } catch (e) {
@@ -107,7 +108,7 @@ class LoginScreen extends StatelessWidget {
                   final user = await provider.facebookLogin();
 
                   if (user != null) {
-                    CashHelper.pref.setBool('isLogin', true);
+                    providerWatch.prefs!.setBool('isLogin', true);
                     Navigator.pushNamed(context, ChatScreen.id);
                   }
                 } catch (e) {

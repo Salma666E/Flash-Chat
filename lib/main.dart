@@ -1,7 +1,9 @@
+import 'dart:developer';
+
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flash_chat/utilty.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth_provider.dart';
 import 'screens/chat_screen.dart';
@@ -9,13 +11,14 @@ import 'screens/login_screen.dart';
 import 'screens/registration_screen.dart';
 import 'screens/welcome_screen.dart';
 
+SharedPreferences? prefs;
 void main() async {
   WidgetsFlutterBinding();
   await Firebase.initializeApp();
-  await CashHelper.init();
+  prefs = await SharedPreferences.getInstance();
   runApp(
     ChangeNotifierProvider(
-        create: (_) => AuthProvider()..getShared(), child: const FlashChat()),
+        create: (_) => AuthProvider(), child: const FlashChat()),
   );
 }
 
@@ -24,17 +27,17 @@ class FlashChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isLogin = prefs!.getBool('isLogin')!;
+
     return MaterialApp(
-      initialRoute: (CashHelper.pref.getBool('isLogin') == true)
-          ? ChatScreen.id
-          : WelcomeScreen.id,
+      initialRoute: isLogin ? ChatScreen.id : WelcomeScreen.id,
       debugShowCheckedModeBanner: false,
       title: 'Private Chat',
       routes: {
-        WelcomeScreen.id: (context) => WelcomeScreen(),
+        WelcomeScreen.id: (context) => const WelcomeScreen(),
         LoginScreen.id: (context) => LoginScreen(),
         RegistrationScreen.id: (context) => RegistrationScreen(),
-        ChatScreen.id: (context) => ChatScreen(),
+        ChatScreen.id: (context) => const ChatScreen(),
       },
     );
   }

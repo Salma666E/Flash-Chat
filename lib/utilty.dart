@@ -1,12 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-class CashHelper {
-  static late final SharedPreferences pref;
-  static init() async {
-    pref = await SharedPreferences.getInstance();
-  }
-}
 
 showAlertDialog(BuildContext context, String txt) {
   Widget okButton = FlatButton(

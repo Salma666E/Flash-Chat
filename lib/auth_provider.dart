@@ -10,9 +10,10 @@ class AuthProvider with ChangeNotifier {
   final googleSignIn = GoogleSignIn();
   GoogleSignInAccount? _user;
   GoogleSignInAccount get user => _user!;
-  dynamic prefs;
-  getShared() async {
+  SharedPreferences? prefs;
+  Future<bool> getShared() async {
     prefs = await SharedPreferences.getInstance();
+    return true;
   }
 
   googleLogin() async {
@@ -26,6 +27,8 @@ class AuthProvider with ChangeNotifier {
         idToken: googleAuth.idToken,
       );
       await FirebaseAuth.instance.signInWithCredential(credential);
+      prefs!.setString('name', _user!.displayName.toString());
+      prefs!.setString('email', _user!.email.toString());
       notifyListeners();
       return googleUser;
     } catch (e) {
@@ -43,7 +46,8 @@ class AuthProvider with ChangeNotifier {
           FacebookAuthProvider.credential(result.accessToken!.token);
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(facebookCredential);
-      log('userCredential: ' + userCredential.user!.toString());
+      prefs!.setString('name', userCredential.user!.displayName.toString());
+      prefs!.setString('email', userCredential.user!.email.toString());
       notifyListeners();
       return result;
     } else {

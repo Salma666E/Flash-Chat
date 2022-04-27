@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flash_chat/utilty.dart';
-import 'package:flash_chat/widget/profile_header_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,8 +11,7 @@ import 'package:swipe_to/swipe_to.dart';
 import '../auth_provider.dart';
 
 final _firestore = FirebaseFirestore.instance;
-dynamic loggedInUser;
-var providerWatch;
+var providerWatch, providerRead;
 
 class ChatScreen extends StatefulWidget {
   static const String id = 'chat_screen';
@@ -27,67 +25,68 @@ class _ChatScreenState extends State<ChatScreen> {
   String replyMessage = '';
   final _auth = FirebaseAuth.instance;
   @override
-  void initState() {
-    super.initState();
-    getCurrentUser();
-  }
-
-  void getCurrentUser() async {
-    try {
-      final user = (await _auth.currentUser)!;
-      if (user != null) {
-        loggedInUser = user;
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    setState(() {
-      providerWatch = Provider.of<AuthProvider>(context, listen: true);
-    });
+    providerWatch = Provider.of<AuthProvider>(context, listen: true);
+    providerRead = Provider.of<AuthProvider>(context, listen: false);
     return WillPopScope(
       onWillPop: () => onBackPressed(context, "ُExit App", () {
         SystemNavigator.pop();
         exit(0);
       }),
       child: Scaffold(
-        extendBodyBehindAppBar: true,
-        backgroundColor: Colors.blue,
-        body: SafeArea(
-          child: Column(
-            children: [
-              ProfileHeaderWidget(auth: _auth),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25),
-                      topRight: Radius.circular(25),
-                    ),
-                  ),
-                  child: MessagesWidget(
-                    emailUser: loggedInUser.email,
-                    onSwipedMessage: (message) {
-                      replyToMessage(message);
-                      focusNode.requestFocus();
-                    },
-                  ),
-                ),
-              ),
-              NewMessageWidget(
-                focusNode: focusNode,
-                emailUser: loggedInUser.email,
-                onCancelReply: cancelReply,
-                replyMessage: replyMessage,
-              )
-            ],
+        appBar: AppBar(
+          title: const Text(
+            '⚡️Chat',
+            style: TextStyle(
+              fontSize: 24,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
+          actions: [
+            InkWell(
+                child: const Icon(
+                  Icons.logout_rounded,
+                  size: 28,
+                  color: Colors.white,
+                ),
+                onTap: () {
+                  providerRead.logout();
+                  Navigator.pop(context);
+                }),
+            const SizedBox(width: 16),
+          ],
         ),
+        backgroundColor: Colors.blue,
+        body: FutureBuilder<bool>(
+            future: providerRead.getShared(),
+            builder: (context, snapshot) {
+              return SafeArea(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        color: Colors.white,
+                        child: MessagesWidget(
+                          emailUser: providerWatch.prefs.getString('email'),
+                          onSwipedMessage: (message) {
+                            replyToMessage(message);
+                            focusNode.requestFocus();
+                          },
+                        ),
+                      ),
+                    ),
+                    NewMessageWidget(
+                      focusNode: focusNode,
+                      emailUser: providerWatch.prefs.getString('email'),
+                      onCancelReply: cancelReply,
+                      replyMessage: replyMessage,
+                    )
+                  ],
+                ),
+              );
+            }),
       ),
     );
   }
@@ -305,8 +304,6 @@ class MessagesWidget extends StatelessWidget {
             if (snapshot.hasError) {
               return buildText('Something Went Wrong Try later');
             } else {
-              print(snapshot.data!.size.toString());
-              print(snapshot.data!.docs.length.toString());
               var messages = snapshot.data;
               return messages!.docs.isEmpty
                   ? buildText('Say Hi..')
@@ -322,7 +319,8 @@ class MessagesWidget extends StatelessWidget {
                               message: snapshot.data!.docs[index]['text'],
                               replyMsg: snapshot.data!.docs[index]
                                   ['replyMessage'],
-                              isMe: loggedInUser.email ==
+                              timeMsg: snapshot.data!.docs[index]['Time'],
+                              isMe: providerWatch.prefs.getString('email') ==
                                   snapshot.data!.docs[index]['sender'],
                               sender: snapshot.data!.docs[index]['name']),
                         );
@@ -347,11 +345,13 @@ class MessageWidget extends StatelessWidget {
   final String replyMsg;
   final bool isMe;
   final String sender;
+  final Timestamp timeMsg;
 
   const MessageWidget(
       {required this.message,
       required this.sender,
       required this.isMe,
+      required this.timeMsg,
       required this.replyMsg});
 
   @override
@@ -362,20 +362,22 @@ class MessageWidget extends StatelessWidget {
 
     return Row(
       mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.all(16),
-          constraints: BoxConstraints(maxWidth: width * 3 / 4),
-          decoration: BoxDecoration(
-            color: isMe ? Colors.grey[100] : Colors.green[100],
-            borderRadius: isMe
-                ? borderRadius
-                    .subtract(const BorderRadius.only(bottomRight: radius))
-                : borderRadius
-                    .subtract(const BorderRadius.only(bottomLeft: radius)),
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
+            constraints: BoxConstraints(maxWidth: width * 3 / 4),
+            decoration: BoxDecoration(
+              color: isMe ? Colors.grey[100] : Colors.green[100],
+              borderRadius: isMe
+                  ? borderRadius
+                      .subtract(const BorderRadius.only(bottomRight: radius))
+                  : borderRadius
+                      .subtract(const BorderRadius.only(bottomLeft: radius)),
+            ),
+            child: buildMessage(replyMsg, sender),
           ),
-          child: buildMessage(replyMsg, sender),
         ),
       ],
     );
