@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flash_chat/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -11,9 +12,9 @@ class AuthProvider with ChangeNotifier {
   GoogleSignInAccount? _user;
   GoogleSignInAccount get user => _user!;
   SharedPreferences? prefs;
-  Future<bool> getShared() async {
+  getShared() async {
     prefs = await SharedPreferences.getInstance();
-    return true;
+    notifyListeners();
   }
 
   googleLogin() async {
@@ -56,8 +57,12 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  logout() async {
+  logout(context) async {
     await googleSignIn.disconnect();
     FirebaseAuth.instance.signOut();
+    prefs!.remove('isLogin');
+    prefs!.remove('name');
+    prefs!.remove('email');
+    Navigator.pushNamed(context, WelcomeScreen.id);
   }
 }

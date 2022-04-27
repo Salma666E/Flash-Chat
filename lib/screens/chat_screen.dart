@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -52,41 +53,36 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: Colors.white,
                 ),
                 onTap: () {
-                  providerRead.logout();
-                  Navigator.pop(context);
+                  providerRead.logout(context);
                 }),
             const SizedBox(width: 16),
           ],
         ),
         backgroundColor: Colors.blue,
-        body: FutureBuilder<bool>(
-            future: providerRead.getShared(),
-            builder: (context, snapshot) {
-              return SafeArea(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        color: Colors.white,
-                        child: MessagesWidget(
-                          emailUser: providerWatch.prefs.getString('email'),
-                          onSwipedMessage: (message) {
-                            replyToMessage(message);
-                            focusNode.requestFocus();
-                          },
-                        ),
-                      ),
-                    ),
-                    NewMessageWidget(
-                      focusNode: focusNode,
-                      emailUser: providerWatch.prefs.getString('email'),
-                      onCancelReply: cancelReply,
-                      replyMessage: replyMessage,
-                    )
-                  ],
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  color: Colors.white,
+                  child: MessagesWidget(
+                    emailUser: providerWatch.prefs.getString('email'),
+                    onSwipedMessage: (message) {
+                      replyToMessage(message);
+                      focusNode.requestFocus();
+                    },
+                  ),
                 ),
-              );
-            }),
+              ),
+              NewMessageWidget(
+                focusNode: focusNode,
+                emailUser: providerWatch.prefs.getString('email'),
+                onCancelReply: cancelReply,
+                replyMessage: replyMessage,
+              )
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -224,6 +220,7 @@ class _NewMessageWidgetState extends State<NewMessageWidget> {
           onCancelReply: widget.onCancelReply,
           isReplying: isReplying,
           sender: ' ',
+          isMe: false,
         ),
       );
 }
@@ -231,22 +228,26 @@ class _NewMessageWidgetState extends State<NewMessageWidget> {
 class ReplyMessageWidget extends StatelessWidget {
   final String message;
   final bool isReplying;
+  final bool isMe;
+  final bool isCancelReply;
   final String sender;
   final VoidCallback onCancelReply;
 
-  const ReplyMessageWidget({
-    required this.message,
-    required this.isReplying,
-    required this.onCancelReply,
-    required this.sender,
-  }) : super();
+  const ReplyMessageWidget(
+      {required this.message,
+      required this.isReplying,
+      required this.onCancelReply,
+      this.isCancelReply=false,
+      required this.sender,
+      required this.isMe})
+      : super();
 
   @override
   Widget build(BuildContext context) => IntrinsicHeight(
         child: Row(
           children: [
             Container(
-              color: Colors.green,
+              color: Colors.green[700],
               width: 4,
             ),
             const SizedBox(width: 8),
@@ -261,21 +262,23 @@ class ReplyMessageWidget extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  sender,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                child: isMe
+                    ? const SizedBox()
+                    : Text(
+                        sender,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
               ),
-              if (onCancelReply == () {})
+              if (!isCancelReply)
                 GestureDetector(
-                  child: const Icon(Icons.close, size: 16),
+                  child: const Icon(Icons.close, color: Colors.black, size: 16),
                   onTap: onCancelReply,
                 )
             ],
           ),
           const SizedBox(height: 8),
           Text(message.toString(),
-              style: const TextStyle(color: Colors.black54)),
+              style: TextStyle(color: isMe ? Colors.white70 : Colors.black54)),
         ],
       );
 }
@@ -356,7 +359,7 @@ class MessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const radius = Radius.circular(12);
+    const radius = Radius.circular(15);
     const borderRadius = BorderRadius.all(radius);
     final width = MediaQuery.of(context).size.width;
 
@@ -366,10 +369,14 @@ class MessageWidget extends StatelessWidget {
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.all(16),
+            alignment: Alignment.centerLeft,
+            margin: isMe
+                ? const EdgeInsets.only(left: 98, top: 16, right: 16, bottom: 8)
+                : const EdgeInsets.only(
+                    right: 98, top: 16, left: 16, bottom: 8),
             constraints: BoxConstraints(maxWidth: width * 3 / 4),
             decoration: BoxDecoration(
-              color: isMe ? Colors.grey[100] : Colors.green[100],
+              color: isMe ? Colors.grey[800] : Colors.green[100],
               borderRadius: isMe
                   ? borderRadius
                       .subtract(const BorderRadius.only(bottomRight: radius))
@@ -384,11 +391,21 @@ class MessageWidget extends StatelessWidget {
   }
 
   Widget buildMessage(String replyMsg, String sender) {
-    final messageWidget = Text(message.toString());
+    final messageWidget = Text(
+      message.toString(),
+      textAlign: TextAlign.left,
+      style: TextStyle(color: isMe ? Colors.white : Colors.black),
+    );
     if (replyMsg.isEmpty) {
       return Column(
         children: [
-          Text(sender),
+          isMe
+              ? const SizedBox()
+              : Text(
+                  '$sender:',
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
           messageWidget,
         ],
       );
@@ -398,25 +415,26 @@ class MessageWidget extends StatelessWidget {
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
-          buildReplyMessage(replyMsg, sender),
+          buildReplyMessage(isMe, replyMsg, sender),
           messageWidget,
         ],
       );
     }
   }
 
-  Widget buildReplyMessage(String replyMsg, String sender) {
+  Widget buildReplyMessage(bool isMe, String replyMsg, String sender) {
     final replyMessage = replyMsg;
     final isReplying = replyMessage != '';
-
+    log(isMe.toString());
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: ReplyMessageWidget(
-        message: replyMessage,
-        onCancelReply: () {},
-        isReplying: isReplying,
-        sender: sender,
-      ),
+          message: replyMessage,
+          onCancelReply: () {},
+          isCancelReply: true,
+          isReplying: isReplying,
+          sender: sender,
+          isMe: isMe),
     );
   }
 }

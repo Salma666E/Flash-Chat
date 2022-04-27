@@ -18,7 +18,7 @@ void main() async {
   prefs = await SharedPreferences.getInstance();
   runApp(
     ChangeNotifierProvider(
-        create: (_) => AuthProvider(), child: const FlashChat()),
+        create: (_) => AuthProvider()..getShared(), child: const FlashChat()),
   );
 }
 
