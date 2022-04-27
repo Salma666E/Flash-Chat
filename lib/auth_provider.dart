@@ -4,11 +4,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
   final googleSignIn = GoogleSignIn();
   GoogleSignInAccount? _user;
   GoogleSignInAccount get user => _user!;
+  dynamic prefs;
+  getShared() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
   googleLogin() async {
     try {
       final googleUser = await googleSignIn.signIn();
@@ -31,7 +37,7 @@ class AuthProvider with ChangeNotifier {
   facebookLogin() async {
     final result =
         await FacebookAuth.i.login(permissions: ["public_profile", "email"]);
-      log('result: ' + result.accessToken.toString());
+    log('result: ' + result.accessToken.toString());
     if (result.status == LoginStatus.success) {
       final AuthCredential facebookCredential =
           FacebookAuthProvider.credential(result.accessToken!.token);
