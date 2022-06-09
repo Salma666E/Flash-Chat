@@ -1,5 +1,6 @@
-import 'package:flash_chat/constants.dart';
 import 'package:flutter/material.dart';
+
+import '../constants.dart';
 
 class RoundedTextField extends StatelessWidget {
   const RoundedTextField(

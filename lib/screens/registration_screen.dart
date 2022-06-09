@@ -1,13 +1,12 @@
-import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flash_chat/components/rounded_textfield.dart';
-import 'package:flash_chat/utilty.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../auth_provider.dart';
 import '../components/rounded_button.dart';
+import '../components/rounded_textfield.dart';
+import '../utilty.dart';
 import '../validation.dart';
 import 'chat_screen.dart';
 

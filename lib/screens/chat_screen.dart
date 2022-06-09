@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flash_chat/utilty.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:swipe_to/swipe_to.dart';
 
 import '../auth_provider.dart';
+import '../utilty.dart';
 
 final _firestore = FirebaseFirestore.instance;
 var providerWatch, providerRead;
@@ -36,8 +36,9 @@ class _ChatScreenState extends State<ChatScreen> {
       }),
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text(
-            '⚡️Chat',
+            '⚡️Your massages',
             style: TextStyle(
               fontSize: 24,
               color: Colors.white,
@@ -61,6 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Colors.blue,
         body: SafeArea(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: Container(
@@ -160,6 +162,7 @@ class _NewMessageWidgetState extends State<NewMessageWidget> {
         children: <Widget>[
           Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (isReplying) buildReply(isReplying),
                 TextField(
@@ -191,7 +194,7 @@ class _NewMessageWidgetState extends State<NewMessageWidget> {
           ),
           const SizedBox(width: 20),
           GestureDetector(
-            onTap: message.trim().isEmpty ? null : sendMessage,
+            onTap: _controller.text.isEmpty ? null : sendMessage,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
@@ -237,7 +240,7 @@ class ReplyMessageWidget extends StatelessWidget {
       {required this.message,
       required this.isReplying,
       required this.onCancelReply,
-      this.isCancelReply=false,
+      this.isCancelReply = false,
       required this.sender,
       required this.isMe})
       : super();
@@ -257,7 +260,7 @@ class ReplyMessageWidget extends StatelessWidget {
       );
 
   Widget buildReplyMessage() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
@@ -265,8 +268,10 @@ class ReplyMessageWidget extends StatelessWidget {
                 child: isMe
                     ? const SizedBox()
                     : Text(
-                        sender,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        '$sender ',
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.indigo),
                       ),
               ),
               if (!isCancelReply)
@@ -398,13 +403,15 @@ class MessageWidget extends StatelessWidget {
     );
     if (replyMsg.isEmpty) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           isMe
               ? const SizedBox()
               : Text(
-                  '$sender:',
+                  '$sender ',
                   textAlign: TextAlign.left,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.indigo),
                 ),
           messageWidget,
         ],
