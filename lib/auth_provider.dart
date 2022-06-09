@@ -58,7 +58,6 @@ class AuthProvider with ChangeNotifier {
   }
 
   logout(context) async {
-    await googleSignIn.disconnect();
     FirebaseAuth.instance.signOut();
     prefs!.remove('isLogin');
     prefs!.remove('name');

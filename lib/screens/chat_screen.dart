@@ -327,7 +327,8 @@ class MessagesWidget extends StatelessWidget {
                               message: snapshot.data!.docs[index]['text'],
                               replyMsg: snapshot.data!.docs[index]
                                   ['replyMessage'],
-                              timeMsg: snapshot.data!.docs[index]['Time'],
+                              timeMsg:
+                                  snapshot.data!.docs[index]['Time'].toDate(),
                               isMe: providerWatch.prefs.getString('email') ==
                                   snapshot.data!.docs[index]['sender'],
                               sender: snapshot.data!.docs[index]['name']),
@@ -353,8 +354,7 @@ class MessageWidget extends StatelessWidget {
   final String replyMsg;
   final bool isMe;
   final String sender;
-  final Timestamp timeMsg;
-
+  final timeMsg;
   const MessageWidget(
       {required this.message,
       required this.sender,
@@ -388,14 +388,39 @@ class MessageWidget extends StatelessWidget {
                   : borderRadius
                       .subtract(const BorderRadius.only(bottomLeft: radius)),
             ),
-            child: buildMessage(replyMsg, sender),
+            child: buildMessage(replyMsg, sender, timeMsg),
           ),
         ),
       ],
     );
   }
 
-  Widget buildMessage(String replyMsg, String sender) {
+  Widget buildMessage(String replyMsg, String sender, timeMsg) {
+    //to get time:
+    var time = "${timeMsg.hour}:${timeMsg.minute}";
+    var temp = int.parse(time.split(':')[0]);
+    String? t;
+    if (temp >= 12 && temp < 24) {
+      t = " PM";
+    } else {
+      t = " AM";
+    }
+    if (temp > 12) {
+      temp = temp - 12;
+      if (temp < 10) {
+        time = time.replaceRange(0, 2, "0$temp");
+        time += t;
+      } else {
+        time = time.replaceRange(0, 2, "$temp");
+        time += t;
+      }
+    } else if (temp == 00) {
+      time = time.replaceRange(0, 2, '12');
+      time += t;
+    } else {
+      time += t;
+    }
+    String timeDate = '${timeMsg.day}-${timeMsg.month}-${timeMsg.year} / $time';
     final messageWidget = Text(
       message.toString(),
       textAlign: TextAlign.left,
@@ -414,16 +439,32 @@ class MessageWidget extends StatelessWidget {
                       fontWeight: FontWeight.bold, color: Colors.indigo),
                 ),
           messageWidget,
+          isMe
+              ? const SizedBox()
+              : Text(
+                  timeDate,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.indigo),
+                ),
         ],
       );
     } else {
       return Column(
         crossAxisAlignment: isMe && replyMsg.isEmpty
             ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
+            : CrossAxisAlignment.stretch,
         children: [
           buildReplyMessage(isMe, replyMsg, sender),
           messageWidget,
+          isMe
+              ? const SizedBox()
+              : Text(
+                  timeDate,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.indigo),
+                ),
         ],
       );
     }
