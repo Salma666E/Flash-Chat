@@ -5,6 +5,7 @@ class RoundedTextField extends StatelessWidget {
   const RoundedTextField(
       {required this.hint,
       this.obscureText = false,
+      required this.validator,
       this.myKeyboardType = TextInputType.text,
       required this.onChangedFunction,
       Key? key})
@@ -13,6 +14,7 @@ class RoundedTextField extends StatelessWidget {
   final TextInputType myKeyboardType;
   final bool obscureText;
   final String hint;
+  final validator;
   @override
   Widget build(BuildContext context) {
     return TextFormField(
@@ -20,6 +22,7 @@ class RoundedTextField extends StatelessWidget {
       textAlign: TextAlign.left,
       onChanged: onChangedFunction,
       obscureText: obscureText,
+      validator: validator,
       decoration:
           kTextFieldDecoration.copyWith(hintText: 'Enter here your $hint'),
     );

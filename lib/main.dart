@@ -27,7 +27,7 @@ class FlashChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isLogin = prefs!.getBool('isLogin')!;
+    bool isLogin = prefs!.getBool('isLogin')??false;
 
     return MaterialApp(
       initialRoute: isLogin ? ChatScreen.id : WelcomeScreen.id,
